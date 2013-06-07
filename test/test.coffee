@@ -227,4 +227,4 @@ makeXml = (xmlbuilder) ->
 assert.throws () -> makeXml(xmlbuilder) Error
 
 # if this doesn't throw we're good
-makeXml xmlbuilder.withopts({suppresscharcheck: true})
+makeXml xmlbuilder.withopts({allowSurrogateChars: true})

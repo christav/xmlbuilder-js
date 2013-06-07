@@ -27,7 +27,7 @@ class XMLBuilder
       name = '' + name or ''
       xmldec ?= { 'version': '1.0' }
 
-    @suppresscharcheck = options?.suppresscharcheck
+    @allowSurrogateChars = options?.allowSurrogateChars
 
     if xmldec? and not xmldec.version?
       throw new Error "Version number is required"
@@ -47,7 +47,7 @@ class XMLBuilder
       if xmldec.standalone?
         att.standalone = if xmldec.standalone then "yes" else "no"
 
-      child = @newXMLFragment '?xml', att
+      child = new XMLFragment @, '?xml', att
       @children.push child
 
     if doctype?
@@ -59,7 +59,7 @@ class XMLBuilder
         doctype.ext = '' + doctype.ext or ''
         att.ext = doctype.ext
 
-      child = @newXMLFragment '!DOCTYPE', att
+      child = new XMLFragment @, '!DOCTYPE', att
       @children.push child
 
     if name?
@@ -85,7 +85,7 @@ class XMLBuilder
       return doc.root()
 
     name = '' + name or ''
-    root = @newXMLFragment name, {}
+    root = new XMLFragment @, name, {}
     root.isRoot = true
     root.documentObject = @
     @children.push root
@@ -126,15 +126,19 @@ class XMLBuilder
     return obj? and clas is type
 
 
-  # Create an XMLFragment as needed
-  # `name` element name
-  # `attributes` any attributes
-  # `text` element text
-  newXMLFragment: (name, attributes, text) ->
-    new XMLFragment @, name, attributes, text
+  # Checks whether the given string contains legal characters
+  # Fails with an exception on error
+  #
+  # `str` the string to check
+  assertLegalChar: (str) =>
+    if @allowSurrogateChars
+      chars = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\uFFFE-\uFFFF]/
+    else
+      chars = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE-\uFFFF]/
+    chr = str.match chars
+    if chr
+      throw new Error "Invalid character (#{chr}) in string: #{str} at index #{chr.index}"
 
-  checkLegalChars: () ->
-    return !@suppresscharcheck
 
 module.exports = XMLBuilder
 
