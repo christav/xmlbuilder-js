@@ -16,7 +16,10 @@ class XMLFragment
     @attributes = attributes
     @value = text
     @children = []
+    @suppresscharcheck = !parent.checkLegalChars()
 
+  checkLegalChars: () ->
+    !@suppresscharcheck
 
   # Creates a child element node
   #
@@ -390,7 +393,7 @@ class XMLFragment
   assertLegalChar: (str) ->
     chars = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE-\uFFFF]/
     chr = str.match chars
-    if chr
+    if chr && !@suppresscharcheck
       throw new Error "Invalid character (#{chr}) in string: #{str}"
 
 

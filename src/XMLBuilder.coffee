@@ -14,7 +14,7 @@ class XMLBuilder
   # `xmldec.standalone` standalone document declaration: true or false
   #
   # `doctype.ext` the external subset containing markup declarations
-  constructor: (name, xmldec, doctype) ->
+  constructor: (name, xmldec, doctype, options) ->
     @children = []
     @rootObject = null
 
@@ -26,6 +26,8 @@ class XMLBuilder
     if name?
       name = '' + name or ''
       xmldec ?= { 'version': '1.0' }
+
+    @suppresscharcheck = options?.suppresscharcheck
 
     if xmldec? and not xmldec.version?
       throw new Error "Version number is required"
@@ -45,19 +47,19 @@ class XMLBuilder
       if xmldec.standalone?
         att.standalone = if xmldec.standalone then "yes" else "no"
 
-      child = new XMLFragment @, '?xml', att
+      child = @newXMLFragment '?xml', att
       @children.push child
 
     if doctype?
       att = {}
       if name?
         att.name = name
-      
+
       if doctype.ext?
         doctype.ext = '' + doctype.ext or ''
         att.ext = doctype.ext
 
-      child = new XMLFragment @, '!DOCTYPE', att
+      child = @newXMLFragment '!DOCTYPE', att
       @children.push child
 
     if name?
@@ -77,13 +79,13 @@ class XMLBuilder
       @rootObject = null
 
     if xmldec?
-      # This will be deprecated in the future. XML prolog should be 
+      # This will be deprecated in the future. XML prolog should be
       #supplied to the constructor
       doc = new XMLBuilder name, xmldec, doctype
       return doc.root()
 
     name = '' + name or ''
-    root = new XMLFragment @, name, {}
+    root = @newXMLFragment name, {}
     root.isRoot = true
     root.documentObject = @
     @children.push root
@@ -123,6 +125,16 @@ class XMLBuilder
     clas = Object.prototype.toString.call(obj).slice(8, -1)
     return obj? and clas is type
 
+
+  # Create an XMLFragment as needed
+  # `name` element name
+  # `attributes` any attributes
+  # `text` element text
+  newXMLFragment: (name, attributes, text) ->
+    new XMLFragment @, name, attributes, text
+
+  checkLegalChars: () ->
+    return !@suppresscharcheck
 
 module.exports = XMLBuilder
 
